@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ChambIA - Estilos simples y optimizados para PWA */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #ECF0F1;
+  color: #2C3E50;
+  /* Prevenir scroll horizontal en móvil */
+  overflow-x: hidden;
+  /* Prevenir zoom accidental en iOS */
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+/* Contenedor móvil PWA */
+.container-mobile {
+  min-height: 100vh;
+  background-color: white;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  /* Safe area para iPhone X y superiores */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Espacio para navegación inferior */
+.main-content {
+  padding-bottom: 5rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+/* Optimización de touch para móvil */
+button, a, .btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Prevenir selección de texto en elementos interactivos */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Optimización para scrolls suaves */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Animaciones simples y optimizadas */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite;
+}
+
+/* Optimización para imágenes responsive */
+img {
+  max-width: 100%;
+  height: auto;
+  /* Prevenir zoom en iOS */
+  -webkit-touch-callout: none;
+}
+
+/* Estados de focus optimizados para móvil */
+button:focus, input:focus, textarea:focus {
+  outline: none;
+  -webkit-tap-highlight-color: rgba(255, 107, 53, 0.1);
+}
+
+/* Prevenir scroll elástico en el body */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Optimización para modo standalone PWA */
+@media (display-mode: standalone) {
+  .container-mobile {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+  }
+}
+
+/* Optimización para iPhone notch */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .container-mobile {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "name": "ChambIA PWA",
+      "icons": [
+        {
+          "src": "/icons/icon-144x144.png",
+          "sizes": "144x144"
+        }
+      ]
+    }
+  ]
+}
