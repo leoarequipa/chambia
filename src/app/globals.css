@@ -2,39 +2,300 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ChambIA - Estilos simples y optimizados para PWA */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #ECF0F1;
-  color: #2C3E50;
-  /* Prevenir scroll horizontal en móvil */
-  overflow-x: hidden;
-  /* Prevenir zoom accidental en iOS */
-  -webkit-text-size-adjust: 100%;
-  touch-action: manipulation;
+/* Material Design 3 - Android Native Styles */
+
+/* Material 3 Color System */
+:root {
+  /* Primary colors */
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #EADDFF;
+  --md-sys-color-on-primary-container: #21005D;
+  
+  /* Secondary colors */
+  --md-sys-color-secondary: #625B71;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #E8DEF8;
+  --md-sys-color-on-secondary-container: #1D192B;
+  
+  /* Tertiary colors */
+  --md-sys-color-tertiary: #7D5260;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #FFD8E4;
+  --md-sys-color-on-tertiary-container: #31111D;
+  
+  /* Surface colors */
+  --md-sys-color-surface: #FEF7FF;
+  --md-sys-color-surface-dim: #DED8E1;
+  --md-sys-color-surface-bright: #FEF7FF;
+  --md-sys-color-surface-variant: #E7E0EC;
+  --md-sys-color-on-surface: #1D1B20;
+  --md-sys-color-on-surface-variant: #49454F;
+  --md-sys-color-surface-container: #F3EDF7;
+  
+  /* Background and outline */
+  --md-sys-color-background: #FEF7FF;
+  --md-sys-color-on-background: #1D1B20;
+  --md-sys-color-outline: #79747E;
+  --md-sys-color-outline-variant: #CAC4D0;
+  
+  /* Error colors */
+  --md-sys-color-error: #B3261E;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #F9DEDC;
+  --md-sys-color-on-error-container: #410E0B;
+  
+  /* Shape */
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 50%;
+  
+  /* Motion */
+  --md-sys-motion-duration-short1: 50ms;
+  --md-sys-motion-duration-short2: 100ms;
+  --md-sys-motion-duration-short3: 150ms;
+  --md-sys-motion-duration-medium1: 250ms;
+  --md-sys-motion-duration-medium2: 300ms;
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0.0, 0, 1.0);
 }
 
-/* Contenedor móvil PWA */
+/* Android Native Typography */
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-surface);
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+
+/* Material Design Typography Scale */
+.md-headline-large { font-size: 32px; line-height: 40px; font-weight: 400; letter-spacing: 0; }
+.md-headline-medium { font-size: 28px; line-height: 36px; font-weight: 400; letter-spacing: 0; }
+.md-headline-small { font-size: 24px; line-height: 32px; font-weight: 400; letter-spacing: 0; }
+.md-title-large { font-size: 22px; line-height: 28px; font-weight: 400; letter-spacing: 0; }
+.md-title-medium { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0.15px; }
+.md-title-small { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.md-body-large { font-size: 16px; line-height: 24px; font-weight: 400; letter-spacing: 0.5px; }
+.md-body-medium { font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0.25px; }
+.md-body-small { font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: 0.4px; }
+.md-label-large { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.md-label-medium { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+.md-label-small { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+
+/* Contenedor Principal de la App */
 .container-mobile {
   min-height: 100vh;
-  background-color: white;
+  min-height: 100dvh;
+  background-color: var(--md-sys-color-background);
   max-width: 430px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  /* Safe area para iPhone X y superiores */
-  padding-top: env(safe-area-inset-top);
+  position: relative;
+  /* Espacio para el menú inferior fijo */
+  padding-bottom: 88px;
+}
+
+/* Contenido Principal - Scrollable */
+.main-content {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: 100px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Material 3 Cards */
+.md-card {
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large);
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.30);
+  overflow: hidden;
+}
+
+.md-card-filled {
+  background-color: var(--md-sys-color-surface-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+}
+
+.md-card-outlined {
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* State Layer para interacciones */
+.md-state-layer {
+  position: relative;
+  overflow: hidden;
+}
+
+.md-state-layer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short2);
+  pointer-events: none;
+}
+
+.md-state-layer:hover::before { opacity: 0.08; }
+.md-state-layer:active::before { opacity: 0.12; }
+
+/* Ripple Effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: var(--y, 50%);
+  left: var(--x, 50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(103, 80, 164, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::after {
+  width: 300%;
+  height: 300%;
+}
+
+/* Material 3 Navigation Bar */
+.bottom-nav-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: var(--md-sys-color-surface-container);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  height: 80px;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Espacio para navegación inferior */
-.main-content {
-  padding-bottom: 5rem;
-  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+/* Top App Bar */
+.md-top-app-bar {
+  background-color: var(--md-sys-color-surface);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
 }
 
-/* Optimización de touch para móvil */
+.md-top-app-bar-small {
+  height: 64px;
+}
+
+/* FAB */
+.md-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.md-fab:hover { box-shadow: 0px 6px 10px 4px rgba(0, 0, 0, 0.15); }
+.md-fab:active { transform: scale(0.95); }
+
+/* Animaciones profesionales */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s var(--md-sys-motion-easing-standard-decelerate) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s var(--md-sys-motion-easing-standard) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s var(--md-sys-motion-easing-standard-decelerate) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s var(--md-sys-motion-easing-standard-decelerate) forwards;
+}
+
+/* Stagger delays para listas */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+
+/* Optimización de rendimiento */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Touch optimization */
 button, a, .btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -42,67 +303,69 @@ button, a, .btn {
   -webkit-user-select: none;
 }
 
-/* Prevenir selección de texto en elementos interactivos */
 input, textarea {
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* Optimización para scrolls suaves */
+/* Scroll behavior */
 html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Animaciones simples y optimizadas */
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
-}
-
-.animate-bounce-subtle {
-  animation: bounce-subtle 2s infinite;
-}
-
-/* Optimización para imágenes responsive */
+/* Images */
 img {
   max-width: 100%;
   height: auto;
-  /* Prevenir zoom en iOS */
   -webkit-touch-callout: none;
 }
 
-/* Estados de focus optimizados para móvil */
-button:focus, input:focus, textarea:focus {
-  outline: none;
-  -webkit-tap-highlight-color: rgba(255, 107, 53, 0.1);
-}
+/* Focus states */
+button:focus, input:focus, textarea:focus { outline: none; }
 
-/* Focus visible para navegación por teclado (accesibilidad) */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-[tabindex]:focus-visible {
-  outline: 3px solid #FF6B35;
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
-/* Skip link styles */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: #FF6B35;
-  color: white;
-  padding: 8px 16px;
-  z-index: 100;
-  transition: top 0.3s;
+/* Loading Spinner */
+.md-circular-progress {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid var(--md-sys-color-primary-container);
+  border-top-color: var(--md-sys-color-primary);
+  animation: md-spin 1s linear infinite;
 }
 
-.skip-link:focus {
-  top: 0;
+@keyframes md-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Safe area support */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .container-mobile {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  
+  .bottom-nav-container {
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(80px + env(safe-area-inset-bottom));
+  }
+  
+  .main-content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+}
+
+/* PWA Standalone Mode */
+@media (display-mode: standalone) {
+  .container-mobile {
+    height: 100vh;
+    height: 100dvh;
+  }
 }
 
 /* Screen reader only */
@@ -118,34 +381,7 @@ textarea:focus-visible,
   border-width: 0;
 }
 
-.sr-only:focus {
-  position: absolute;
-  width: auto;
-  height: auto;
-  padding: 8px 16px;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
-/* Prevenir scroll elástico en el body */
+/* Overscroll prevention */
 html, body {
   overscroll-behavior-y: contain;
-}
-
-/* Optimización para modo standalone PWA */
-@media (display-mode: standalone) {
-  .container-mobile {
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height */
-  }
-}
-
-/* Optimización para iPhone notch */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .container-mobile {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
 }

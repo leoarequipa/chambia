@@ -1,11 +1,110 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, Suspense } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
+import { Button, FAB } from '@/components/ui/Button'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { CardSkeleton, ImageGridSkeleton } from '@/components/ui/Skeleton'
 import { obtenerPerfilActual, obtenerTrabajosComoWorks, inicializarDatos } from '@/lib/intelligence'
 import { getWorker } from '@/lib/data'
+
+// Lazy load del componente de cámara
+const CameraIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+))
+
+const StarIcon = memo(() => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+))
+
+const WorkIcon = memo(() => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+  </svg>
+))
+
+const PersonIcon = memo(() => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+))
+
+const ListIcon = memo(() => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="8" y1="6" x2="21" y2="6"/>
+    <line x1="8" y1="12" x2="21" y2="12"/>
+    <line x1="8" y1="18" x2="21" y2="18"/>
+    <line x1="3" y1="6" x2="3.01" y2="6"/>
+    <line x1="3" y1="12" x2="3.01" y2="12"/>
+    <line x1="3" y1="18" x2="3.01" y2="18"/>
+  </svg>
+))
+
+const TrendingIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+    <polyline points="17 6 23 6 23 12"/>
+  </svg>
+))
+
+// Componente memoizado para tarjeta de trabajo
+const WorkCard = memo(function WorkCard({ trabajo, index }: { trabajo: any; index: number }) {
+  return (
+    <div 
+      className={`md-card aspect-square overflow-hidden rounded-2xl relative group animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
+    >
+      <img
+        src={trabajo.image}
+        alt={trabajo.title}
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+        decoding="async"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = '/images/work-placeholder.jpg'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+    </div>
+  )
+})
+
+// Componente memoizado para acceso rápido
+const QuickAccessCard = memo(function QuickAccessCard({ 
+  href, 
+  icon, 
+  title, 
+  subtitle,
+  color
+}: { 
+  href: string
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+  color: string
+}) {
+  return (
+    <Link href={href} className="block animate-fade-in-up stagger-2">
+      <div className={`md-card-filled p-4 rounded-2xl md-state-layer cursor-pointer active:scale-95 transition-all duration-200 hover:shadow-md ${color}`}>
+        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-3">
+          {icon}
+        </div>
+        <p className="md-label-large text-[var(--md-sys-color-on-surface)]">
+          {title}
+        </p>
+        <p className="md-body-small text-[var(--md-sys-color-on-surface-variant)] mt-1">
+          {subtitle}
+        </p>
+      </div>
+    </Link>
+  )
+})
 
 export default function HomePage() {
   const [perfil, setPerfil] = useState<any>(null)
@@ -13,16 +112,29 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    // Inicializar datos
+    // Carga rápida desde cache/localStorage si existe
+    const cachedPerfil = localStorage.getItem('chambia_perfil')
+    const cachedTrabajos = localStorage.getItem('chambia_trabajos')
+    
+    if (cachedPerfil && cachedTrabajos) {
+      setPerfil(JSON.parse(cachedPerfil))
+      setTrabajos(JSON.parse(cachedTrabajos))
+      setIsLoading(false)
+    }
+    
+    // Carga fresh en background
     inicializarDatos()
     
-    // Cargar datos
     const perfilActual = obtenerPerfilActual()
     const trabajosActuales = obtenerTrabajosComoWorks()
     
     setPerfil(perfilActual)
     setTrabajos(trabajosActuales)
     setIsLoading(false)
+    
+    // Cachear para próximas cargas
+    localStorage.setItem('chambia_perfil', JSON.stringify(perfilActual))
+    localStorage.setItem('chambia_trabajos', JSON.stringify(trabajosActuales))
   }, [])
 
   const worker = getWorker()
@@ -30,11 +142,18 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="container-mobile flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando...</p>
-        </div>
+      <div className="container-mobile">
+        <header className="px-4 pt-4 pb-2">
+          <CardSkeleton />
+        </header>
+        <main className="main-content">
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="h-24 bg-[var(--md-sys-color-surface-variant)] rounded-2xl animate-pulse" />
+            <div className="h-24 bg-[var(--md-sys-color-surface-variant)] rounded-2xl animate-pulse" />
+          </div>
+          <ImageGridSkeleton count={4} />
+        </main>
+        <BottomNav activeTab="home" />
       </div>
     )
   }
@@ -42,15 +161,19 @@ export default function HomePage() {
   if (!perfil) {
     return (
       <div className="container-mobile">
-        <div className="text-center py-8">
-          <p className="text-gray-600">Error al cargar datos</p>
-          <Button 
-            variant="primary" 
-            onClick={() => window.location.reload()}
-            className="mt-4"
-          >
-            Reintentar
-          </Button>
+        <div className="flex-1 flex items-center justify-center animate-fade-in">
+          <div className="text-center">
+            <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)]">
+              Error al cargar datos
+            </p>
+            <Button 
+              variant="filled" 
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Reintentar
+            </Button>
+          </div>
         </div>
         <BottomNav activeTab="home" />
       </div>
@@ -59,104 +182,137 @@ export default function HomePage() {
 
   return (
     <div className="container-mobile">
-      <header className="text-center py-6 border-b border-gray-200">
-        <h1 className="text-3xl font-bold text-orange-500 mb-2">🛠️ ChambIA</h1>
-        <p className="text-gray-600 text-base">Tu trabajo genera confianza</p>
+      {/* Header */}
+      <header className="px-4 pt-4 pb-2 animate-fade-in-up">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
+              Bienvenido
+            </p>
+            <h1 className="md-headline-small text-[var(--md-sys-color-on-surface)]">
+              ChambIA
+            </h1>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center animate-scale-in">
+            <span className="text-[var(--md-sys-color-on-primary-container)] font-medium">
+              {perfil.nombre.charAt(0)}
+            </span>
+          </div>
+        </div>
       </header>
 
-      <main id="main-content" className="main-content py-6" role="main" aria-label="Contenido principal">
-        {/* Botón principal - la acción más importante */}
-        <Link href="/register-work">
-          <Button 
-            variant="primary"
-            icon="📸"
-            className="mb-6"
-          >
-            Registrar Trabajo de Hoy
-          </Button>
-        </Link>
-
-        {/* Perfil simple - solo lo que importa */}
-        <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-          <div className="flex items-center gap-3">
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Profile Card */}
+        <div className="md-card p-4 mb-4 animate-fade-in-up stagger-1">
+          <div className="flex items-center gap-4">
             <img 
               src={perfil.avatar || worker.avatar}
               alt={perfil.nombre}
-              className="w-12 h-12 rounded-full"
+              className="w-14 h-14 rounded-full object-cover border-2 border-[var(--md-sys-color-outline-variant)]"
+              loading="eager"
             />
             <div className="flex-1">
-              <p className="font-bold text-lg">{perfil.nombre}</p>
-              <p className="text-sm text-gray-600">
-                {perfil.reputacion.toFixed(1)} estrellas • {perfil.totalTrabajos} trabajos
+              <p className="md-title-medium text-[var(--md-sys-color-on-surface)]">
+                {perfil.nombre}
               </p>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1 text-[var(--md-sys-color-primary)]">
+                  <StarIcon />
+                  <span className="md-label-large">{perfil.reputacion.toFixed(1)}</span>
+                </div>
+                <span className="text-[var(--md-sys-color-outline)]">•</span>
+                <div className="flex items-center gap-1 text-[var(--md-sys-color-on-surface-variant)]">
+                  <WorkIcon />
+                  <span className="md-label-large">{perfil.totalTrabajos}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-2xl">⭐</div>
           </div>
         </div>
 
-        {/* Trabajos recientes - visuales, sin complejidad */}
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <QuickAccessCard 
+            href="/profile"
+            icon={<PersonIcon />}
+            title="Mi Perfil"
+            subtitle="Ver detalles"
+            color="bg-[var(--md-sys-color-secondary-container)]"
+          />
+          <QuickAccessCard 
+            href="/history"
+            icon={<ListIcon />}
+            title="Historial"
+            subtitle={`${trabajos.length} trabajos`}
+            color="bg-[var(--md-sys-color-tertiary-container)]"
+          />
+        </div>
+
+        {/* Recent Works */}
         <div className="mb-6">
-          <h3 className="font-bold text-lg mb-3">
-            {trabajosRecientes.length > 0 ? 'Tus trabajos recientes' : 'Comienza a registrar'}
-          </h3>
+          <div className="flex items-center justify-between mb-3 animate-fade-in-up stagger-3">
+            <h3 className="md-title-medium text-[var(--md-sys-color-on-surface)]">
+              Trabajos recientes
+            </h3>
+            <Link href="/history">
+              <span className="md-label-large text-[var(--md-sys-color-primary)]">
+                Ver todo
+              </span>
+            </Link>
+          </div>
           
           {trabajosRecientes.length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
-              {trabajosRecientes.map((trabajo) => (
-                <div key={trabajo.id} className="aspect-square overflow-hidden rounded-lg shadow-sm bg-gray-100">
-                  <img
-                    src={trabajo.image}
-                    alt={trabajo.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/work-placeholder.jpg'
-                    }}
-                  />
-                </div>
+              {trabajosRecientes.map((trabajo, index) => (
+                <WorkCard key={trabajo.id} trabajo={trabajo} index={index} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 mb-2">Aún no tienes trabajos</p>
-              <p className="text-gray-400 text-sm">Registra tu primer trabajo para empezar</p>
+            <div className="md-card-filled rounded-2xl p-8 text-center animate-fade-in-up stagger-3">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center">
+                <CameraIcon />
+              </div>
+              <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)]">
+                No tienes trabajos aún
+              </p>
             </div>
           )}
         </div>
 
-        {/* Acciones rápidas - simples y claras */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Link href="/profile">
-            <button className="bg-white p-4 border-2 border-gray-200 rounded-xl text-center hover:border-orange-500 transition-colors w-full">
-              <div className="text-2xl mb-1">👤</div>
-              <div className="text-sm font-semibold">Mi Perfil</div>
-            </button>
-          </Link>
-          <Link href="/history">
-            <button className="bg-white p-4 border-2 border-gray-200 rounded-xl text-center hover:border-orange-500 transition-colors w-full">
-              <div className="text-2xl mb-1">📋</div>
-              <div className="text-sm font-semibold">Ver Todos</div>
-            </button>
-          </Link>
-        </div>
-
-        {/* Mensaje motivacional - humano y simple */}
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">🌟</div>
+        {/* Motivational Banner */}
+        <div className="md-card-filled rounded-2xl p-4 mb-4 animate-fade-in-up stagger-5">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-[var(--md-sys-color-tertiary-container)] flex items-center justify-center">
+              <TrendingIcon />
+            </div>
             <div>
-              <p className="font-bold text-green-800">
+              <p className="md-title-small text-[var(--md-sys-color-on-surface)]">
                 {perfil.totalTrabajos > 0 ? '¡Vas muy bien!' : '¡Comienza hoy!'}
               </p>
-              <p className="text-sm text-green-600">
+              <p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
                 {perfil.totalTrabajos > 0 
-                  ? 'Tu perfil se hace más confiable con cada trabajo'
-                  : 'Registra tu primer trabajo y empieza a construir tu reputación'}
+                  ? 'Tu perfil se hace más confiable'
+                  : 'Registra tu primer trabajo'}
               </p>
             </div>
           </div>
         </div>
+
+        {/* FAB for adding work */}
+        <div className="flex justify-center mb-6 animate-fade-in-up stagger-6">
+          <Link href="/register-work">
+            <FAB
+              icon={<CameraIcon />}
+              ariaLabel="Registrar nuevo trabajo"
+              variant="primary"
+              size="standard"
+            />
+          </Link>
+        </div>
       </main>
 
+      {/* Bottom Navigation */}
       <BottomNav activeTab="home" />
     </div>
   )

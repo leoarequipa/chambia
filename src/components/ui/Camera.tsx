@@ -1,203 +1,259 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback, useEffect, memo } from 'react'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { permissionService, PERMISSIONS_INFO } from '@/lib/permissions'
 
 interface CameraCaptureProps {
   onCapture: (imageData: string) => void
   onCancel: () => void
 }
 
+// Material Icons memoizados
+const CloseIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M18 6L6 18M6 6l12 12"/>
+  </svg>
+))
+
+const CameraIcon = memo(() => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+))
+
+const PermissionIcon = memo(() => (
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <circle cx="12" cy="11" r="3"/>
+  </svg>
+))
+
+const SettingsIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+))
+
 export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [stream, setStream] = useState<MediaStream | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const [permissionStatus, setPermissionStatus] = useState<'checking' | 'granted' | 'denied' | 'requesting'>('checking')
+  const [showPermissionRationale, setShowPermissionRationale] = useState(false)
 
-  const startCamera = useCallback(async () => {
+  // Verificar permisos al montar
+  useEffect(() => {
+    checkPermissions()
+  }, [])
+
+  const checkPermissions = async () => {
+    setPermissionStatus('checking')
+    const status = await permissionService.checkCameraPermissions()
+    
+    if (status.camera === 'granted' || status.camera === 'limited') {
+      setPermissionStatus('granted')
+      // Abrir cámara inmediatamente
+      openNativeCamera()
+    } else if (status.camera === 'denied') {
+      setPermissionStatus('denied')
+      setError('Los permisos de cámara fueron denegados permanentemente.')
+    } else {
+      // prompt o prompt-with-rationale
+      setShowPermissionRationale(true)
+      setPermissionStatus('requesting')
+    }
+  }
+
+  const requestPermissions = async () => {
     setIsLoading(true)
     setError(null)
     
     try {
-      // Intentar usar la cámara trasera en móviles
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: false
-      }
+      const status = await permissionService.requestCameraPermissions()
       
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-      setStream(mediaStream)
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
+      if (status.camera === 'granted' || status.camera === 'limited') {
+        setPermissionStatus('granted')
+        setShowPermissionRationale(false)
+        openNativeCamera()
+      } else {
+        setPermissionStatus('denied')
+        setError('No se pudo obtener permiso para usar la cámara.')
       }
     } catch (err) {
-      console.error('Error accessing camera:', err)
-      setError('No se pudo acceder a la cámara. Asegúrate de dar permisos.')
+      console.error('Error requesting permissions:', err)
+      setError('Error al solicitar permisos.')
+      setPermissionStatus('denied')
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }
 
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop())
-      setStream(null)
+  const openNativeCamera = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const image = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: true,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        width: 1920,
+        height: 1080,
+        correctOrientation: true,
+        promptLabelHeader: 'Tomar Foto',
+        promptLabelCancel: 'Cancelar',
+        promptLabelPhoto: 'Cámara',
+        promptLabelPicture: 'Galería',
+      })
+
+      if (image.dataUrl) {
+        onCapture(image.dataUrl)
+      } else {
+        setError('No se pudo capturar la imagen')
+        setPermissionStatus('requesting')
+        setShowPermissionRationale(true)
+      }
+    } catch (err: any) {
+      console.error('Error opening camera:', err)
+      
+      // Si el usuario canceló, volver a la pantalla anterior
+      if (err.message && err.message.includes('User cancelled')) {
+        onCancel()
+        return
+      }
+      
+      // Si es error de permisos
+      if (err.message && (err.message.includes('permission') || err.message.includes('Permission'))) {
+        setPermissionStatus('denied')
+        setError('Se requieren permisos de cámara para continuar.')
+      } else {
+        setError('No se pudo abrir la cámara. Intenta de nuevo.')
+        setPermissionStatus('requesting')
+        setShowPermissionRationale(true)
+      }
+    } finally {
+      setIsLoading(false)
     }
-  }, [stream])
+  }
 
-  const capturePhoto = useCallback(() => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current
-      const canvas = canvasRef.current
-      
-      // Configurar canvas con las dimensiones del video
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        // Dibujar el frame actual del video en el canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        
-        // Convertir a base64 con compresión
-        const imageData = canvas.toDataURL('image/jpeg', 0.8)
-        setCapturedImage(imageData)
-        stopCamera()
+  const openSettings = () => {
+    // Abrir configuración de la app en Android
+    if (typeof window !== 'undefined' && (window as any).Capacitor) {
+      // En Capacitor, intentar abrir settings
+      try {
+        const { App } = require('@capacitor/app')
+        App.openUrl({ url: 'app-settings:' })
+      } catch (e) {
+        console.error('Could not open settings:', e)
+        setError('Por favor, ve a Configuración > Aplicaciones > ChambIA > Permisos y habilita la cámara.')
       }
     }
-  }, [stopCamera])
+  }
 
-  const retakePhoto = useCallback(() => {
-    setCapturedImage(null)
-    startCamera()
-  }, [startCamera])
+  // Pantalla de solicitud de permisos educativa
+  if (showPermissionRationale && permissionStatus === 'requesting') {
+    return (
+      <div className="fixed inset-0 z-50 bg-[var(--md-sys-color-background)] flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in">
+          <div className="w-24 h-24 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center mb-6">
+            <span className="text-[var(--md-sys-color-on-primary-container)]">
+              <PermissionIcon />
+            </span>
+          </div>
+          
+          <h2 className="md-headline-small text-[var(--md-sys-color-on-surface)] text-center mb-2">
+            Permiso de Cámara
+          </h2>
+          
+          <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)] text-center mb-8 max-w-sm">
+            {PERMISSIONS_INFO.camera.description}
+          </p>
+          
+          <div className="space-y-3 w-full max-w-sm">
+            <button
+              onClick={requestPermissions}
+              disabled={isLoading}
+              className="w-full py-4 px-6 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] md-label-large font-medium shadow-lg active:scale-95 transition-all disabled:opacity-50"
+            >
+              {isLoading ? 'Solicitando...' : 'Permitir acceso'}
+            </button>
+            
+            <button
+              onClick={onCancel}
+              className="w-full py-4 px-6 rounded-full text-[var(--md-sys-color-on-surface-variant)] md-label-large font-medium active:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const confirmPhoto = useCallback(() => {
-    if (capturedImage) {
-      onCapture(capturedImage)
-    }
-  }, [capturedImage, onCapture])
-
-  // Iniciar cámara automáticamente al montar
-  useState(() => {
-    startCamera()
-  })
-
+  // Pantalla de error o carga
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black">
+    <div className="fixed inset-0 z-50 bg-[var(--md-sys-color-background)] flex flex-col">
+      {/* Top App Bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--md-sys-color-outline-variant)]">
         <button
-          onClick={() => {
-            stopCamera()
-            onCancel()
-          }}
-          className="text-white p-2"
-          aria-label="Cerrar cámara"
+          onClick={onCancel}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--md-sys-color-on-surface)] md-state-layer"
+          aria-label="Cerrar"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseIcon />
         </button>
-        <span className="text-white font-semibold">Tomar Foto</span>
+        
+        <span className="md-title-medium text-[var(--md-sys-color-on-surface)]">Cámara</span>
+        
         <div className="w-10" />
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-6">
+        {isLoading ? (
           <div className="text-center">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button
-              onClick={startCamera}
-              className="bg-orange-500 text-white px-6 py-2 rounded-lg"
-            >
-              Intentar de nuevo
-            </button>
+            <div className="md-circular-progress mx-auto mb-4" />
+            <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)]">Abriendo cámara...</p>
           </div>
-        </div>
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4" />
-            <p className="text-white">Iniciando cámara...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Vista previa de la cámara */}
-      {!error && !isLoading && !capturedImage && (
-        <div className="flex-1 relative">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover"
-            onLoadedMetadata={() => setIsLoading(false)}
-          />
-          
-          {/* Guía de enfoque */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-64 border-2 border-white/50 rounded-lg">
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-orange-500 -mt-1 -ml-1" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-orange-500 -mt-1 -mr-1" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-orange-500 -mb-1 -ml-1" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-orange-500 -mb-1 -mr-1" />
+        ) : (
+          <div className="text-center p-6 rounded-2xl max-w-sm bg-[var(--md-sys-color-error-container)] animate-fade-in">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-[var(--md-sys-color-error)]">
+              <span className="text-white">
+                <CameraIcon />
+              </span>
+            </div>
+            <p className="md-body-large mb-4 text-[var(--md-sys-color-on-error-container)]">
+              {error || 'No se pudo acceder a la cámara'}
+            </p>
+            <div className="space-y-2">
+              {permissionStatus === 'denied' ? (
+                <button
+                  onClick={openSettings}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]"
+                >
+                  <SettingsIcon />
+                  <span>Abrir Configuración</span>
+                </button>
+              ) : (
+                <button
+                  onClick={checkPermissions}
+                  className="w-full px-6 py-3 rounded-full font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]"
+                >
+                  Intentar de nuevo
+                </button>
+              )}
+              <button
+                onClick={onCancel}
+                className="w-full px-6 py-3 rounded-full font-medium text-[var(--md-sys-color-on-error-container)]"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
-
-          {/* Controles */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-            <button
-              onClick={capturePhoto}
-              className="w-20 h-20 rounded-full bg-white border-4 border-orange-500 flex items-center justify-center active:scale-95 transition-transform"
-              aria-label="Tomar foto"
-            >
-              <div className="w-16 h-16 rounded-full bg-orange-500" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Vista previa de la foto capturada */}
-      {capturedImage && (
-        <div className="flex-1 relative">
-          <img
-            src={capturedImage}
-            alt="Foto capturada"
-            className="absolute inset-0 w-full h-full object-contain bg-black"
-          />
-          
-          {/* Controles */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4">
-            <button
-              onClick={retakePhoto}
-              className="px-6 py-3 bg-gray-600 text-white rounded-full font-semibold"
-            >
-              Volver a tomar
-            </button>
-            <button
-              onClick={confirmPhoto}
-              className="px-6 py-3 bg-orange-500 text-white rounded-full font-semibold"
-            >
-              Usar foto
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Canvas oculto para procesamiento */}
-      <canvas ref={canvasRef} className="hidden" />
+        )}
+      </div>
     </div>
   )
 }

@@ -1,13 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
+import { Button, IconButton } from '@/components/ui/Button'
 import { AnalysisFeedback } from '@/components/ui/AnalysisFeedback'
 import { CameraCapture } from '@/components/ui/Camera'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { analizarNuevoTrabajo, inicializarDatos } from '@/lib/intelligence'
+
+// Material Icons memoizados
+const ArrowBackIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M19 12H5M12 19l-7-7 7-7"/>
+  </svg>
+))
+
+const CameraIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+))
+
+const CheckIcon = memo(() => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+))
+
+const EditIcon = memo(() => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+))
+
+// Tipos de trabajo para autocompletado
+const WORK_TYPES = [
+  { keywords: ['caño', 'tubería', 'grifo', 'fuga', 'agua', 'desagüe'], type: 'Gasfitería' },
+  { keywords: ['muro', 'pared', 'ladrillo', 'cemento', 'construcción', 'obra'], type: 'Construcción' },
+  { keywords: ['luz', 'cable', 'toma', 'enchufe', 'corriente', 'eléctrico'], type: 'Electricidad' },
+  { keywords: ['pintar', 'color', 'brocha', 'pintura', 'pared'], type: 'Pintura' },
+  { keywords: ['puerta', 'ventana', 'madera', 'cerrajería'], type: 'Carpintería' },
+]
 
 export default function RegisterWorkPage() {
   const router = useRouter()
@@ -19,22 +55,32 @@ export default function RegisterWorkPage() {
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  // Inicializar datos al cargar
   useEffect(() => {
     inicializarDatos()
   }, [])
 
-  const handleImageCapture = (imageData: string) => {
+  const handleImageCapture = useCallback((imageData: string) => {
     setCapturedImage(imageData)
     setShowCamera(false)
-  }
+  }, [])
 
-  const handleCameraCancel = () => {
+  const handleCameraCancel = useCallback(() => {
     setShowCamera(false)
-  }
+  }, [])
 
-  const handleSave = async () => {
-    // Validaciones
+  const detectarTipoTrabajo = useCallback((desc: string): string => {
+    const texto = desc.toLowerCase()
+    
+    for (const workType of WORK_TYPES) {
+      if (workType.keywords.some(keyword => texto.includes(keyword))) {
+        return workType.type
+      }
+    }
+    
+    return 'Trabajo General'
+  }, [])
+
+  const handleSave = useCallback(async () => {
     if (!capturedImage) {
       setError('Por favor, toma una foto del trabajo')
       return
@@ -55,23 +101,24 @@ export default function RegisterWorkPage() {
     setShowAnalysis(true)
 
     try {
-      // Detectar tipo automáticamente desde descripción
       const workType = detectarTipoTrabajo(description)
       
-      // Analizar trabajo basado en hechos reales
       const analysis = await analizarNuevoTrabajo({
         titulo: workType,
         descripcion: description,
         tipo: workType,
-        imagen: capturedImage // Imagen real capturada
+        imagen: capturedImage
       })
 
       setAnalysisResult(analysis)
       
-      // Mostrar feedback y redirigir
+      // Limpiar cache para forzar recarga en otras páginas
+      localStorage.removeItem('chambia_perfil')
+      localStorage.removeItem('chambia_trabajos')
+      
       setTimeout(() => {
         router.push('/')
-      }, 3000)
+      }, 2500)
 
     } catch (error) {
       console.error('Error:', error)
@@ -79,27 +126,8 @@ export default function RegisterWorkPage() {
       setIsAnalyzing(false)
       setShowAnalysis(false)
     }
-  }
+  }, [capturedImage, description, detectarTipoTrabajo, router])
 
-  // Detectar tipo de trabajo real desde descripción
-  const detectarTipoTrabajo = (desc: string): string => {
-    const texto = desc.toLowerCase()
-    
-    if (texto.includes('caño') || texto.includes('tubería') || texto.includes('grifo') || texto.includes('fuga') || texto.includes('agua')) 
-      return 'Gasfitería'
-    if (texto.includes('muro') || texto.includes('pared') || texto.includes('ladrillo') || texto.includes('cemento') || texto.includes('construcción')) 
-      return 'Construcción'
-    if (texto.includes('luz') || texto.includes('cable') || texto.includes('toma') || texto.includes('enchufe') || texto.includes('corriente')) 
-      return 'Electricidad'
-    if (texto.includes('pintar') || texto.includes('color') || texto.includes('brocha') || texto.includes('pintura')) 
-      return 'Pintura'
-    if (texto.includes('puerta') || texto.includes('ventana') || texto.includes('madera') || texto.includes('cerrajería'))
-      return 'Carpintería'
-    
-    return 'Trabajo General'
-  }
-
-  // Si la cámara está activa, mostrar solo el componente de cámara
   if (showCamera) {
     return (
       <CameraCapture 
@@ -111,20 +139,32 @@ export default function RegisterWorkPage() {
 
   return (
     <div className="container-mobile">
-      <header className="text-center py-6 border-b border-gray-200">
-        <h1 className="text-3xl font-bold text-orange-500 mb-2">📸 Nuevo Trabajo</h1>
-        <p className="text-gray-600 text-base">Muestra lo que hiciste hoy</p>
+      {/* Top App Bar */}
+      <header className="md-top-app-bar-small px-4 animate-fade-in">
+        <div className="flex items-center gap-4 w-full">
+          <Link href="/">
+            <IconButton 
+              icon={<ArrowBackIcon />}
+              ariaLabel="Volver"
+              variant="standard"
+            />
+          </Link>
+          <h1 className="md-title-large text-[var(--md-sys-color-on-surface)]">
+            Nuevo Trabajo
+          </h1>
+        </div>
       </header>
 
-      <main id="main-content" className="main-content py-6" role="main" aria-label="Formulario de registro de trabajo">
+      {/* Main Content */}
+      <main className="main-content">
         {/* Error */}
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-4 p-4 rounded-2xl bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] animate-fade-in">
+            <p className="md-body-medium">{error}</p>
           </div>
         )}
 
-        {/* Feedback del análisis */}
+        {/* Analysis Feedback */}
         <AnalysisFeedback 
           isAnalyzing={isAnalyzing}
           result={analysisResult?.resultado}
@@ -132,79 +172,91 @@ export default function RegisterWorkPage() {
 
         {!showAnalysis && (
           <>
-            {/* Área de captura de imagen */}
-            <div className="mb-6">
-              <label className="block mb-2 font-semibold text-slate-800 text-base">
+            {/* Image Capture */}
+            <div className="mb-6 animate-fade-in-up stagger-1">
+              <label className="md-label-large text-[var(--md-sys-color-on-surface)] block mb-2">
                 Foto del trabajo
               </label>
               
               {capturedImage ? (
-                <div className="relative">
+                <div className="md-card rounded-2xl overflow-hidden relative">
                   <img
                     src={capturedImage}
                     alt="Trabajo capturado"
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-56 object-cover"
                   />
                   <button
                     onClick={() => setShowCamera(true)}
-                    className="absolute bottom-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium"
+                    className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] md-body-medium shadow-lg active:scale-95 transition-transform"
                   >
-                    Cambiar foto
+                    <EditIcon />
+                    <span>Cambiar</span>
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setShowCamera(true)}
-                  className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full h-56 rounded-2xl border-2 border-dashed border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-variant)] flex flex-col items-center justify-center md-state-layer active:scale-95 transition-transform"
                 >
-                  <div className="text-4xl mb-2">📷</div>
-                  <span className="text-gray-600 font-medium">Tocar para tomar foto</span>
-                  <span className="text-gray-400 text-sm mt-1">Usa la cámara de tu celular</span>
+                  <div className="w-16 h-16 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center mb-3 animate-scale-in">
+                    <CameraIcon />
+                  </div>
+                  <span className="md-body-large font-medium text-[var(--md-sys-color-on-surface)]">
+                    Tocar para tomar foto
+                  </span>
                 </button>
               )}
             </div>
 
-            {/* Campo de descripción */}
-            <div className="mb-6">
-              <label className="block mb-2 font-semibold text-slate-800 text-base">
+            {/* Description */}
+            <div className="mb-6 animate-fade-in-up stagger-2">
+              <label className="md-label-large text-[var(--md-sys-color-on-surface)] block mb-2">
                 ¿Qué hiciste?
               </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ej: Arreglé el caño de la cocina que tenía fuga"
-                className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
-                rows={3}
-                disabled={isAnalyzing}
-              />
-              <p className="text-gray-400 text-sm mt-1">
-                {description.length}/200 caracteres
-              </p>
+              <div className="bg-[var(--md-sys-color-surface-variant)] rounded-2xl overflow-hidden">
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Ej: Arreglé el caño de la cocina..."
+                  className="w-full px-4 py-4 bg-transparent md-body-large resize-none focus:outline-none text-[var(--md-sys-color-on-surface)]"
+                  rows={3}
+                  disabled={isAnalyzing}
+                />
+                <div className="px-4 pb-2 text-right">
+                  <span className={`md-label-small ${description.length > 180 ? 'text-[var(--md-sys-color-error)]' : 'text-[var(--md-sys-color-on-surface-variant)]'}`}>
+                    {description.length}/200
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <Button 
-              variant="primary"
-              icon="✅"
-              onClick={handleSave}
-              disabled={isAnalyzing}
-              className="mb-3"
-            >
-              {isAnalyzing ? 'Mejorando tu perfil...' : 'Guardar Trabajo'}
-            </Button>
-
-            <Link href="/">
+            {/* Action Buttons */}
+            <div className="animate-fade-in-up stagger-3">
               <Button 
-                variant="outline"
+                variant="filled"
+                icon={<CheckIcon />}
+                onClick={handleSave}
                 disabled={isAnalyzing}
-                className="w-full"
+                size="large"
+                className="mb-3"
               >
-                Cancelar
+                {isAnalyzing ? 'Guardando...' : 'Guardar Trabajo'}
               </Button>
-            </Link>
+
+              <Link href="/" className="block">
+                <Button 
+                  variant="text"
+                  disabled={isAnalyzing}
+                  className="w-full"
+                >
+                  Cancelar
+                </Button>
+              </Link>
+            </div>
 
             {/* Tip */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="mt-6 p-4 rounded-2xl bg-[var(--md-sys-color-tertiary-container)] animate-fade-in-up stagger-4">
+              <p className="md-body-medium text-[var(--md-sys-color-on-tertiary-container)]">
                 💡 Cada foto que subes hace tu perfil más confiable
               </p>
             </div>
@@ -212,6 +264,7 @@ export default function RegisterWorkPage() {
         )}
       </main>
 
+      {/* Bottom Navigation */}
       <BottomNav activeTab="register-work" />
     </div>
   )
