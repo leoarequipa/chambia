@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import AuthWrapper from '@/components/auth/AuthWrapper'
-import { SkipLink } from '@/components/ui/Accessibility'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -68,7 +66,6 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body>
-        <SkipLink />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -86,7 +83,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <AuthWrapper>{children}</AuthWrapper>
+        {children}
       </body>
     </html>
   )

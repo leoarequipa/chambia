@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ProfileHeader } from '@/components/ui/ProfileHeader'
-import { mockWorker } from '@/lib/data'
+import { mockWorker, mockWorkerWorks } from '@/lib/data'
 
 export default function EmployerViewPage() {
   const router = useRouter()
 
-  const workImages = mockWorker.works.slice(0, 6).map(work => ({
+  const workImages = mockWorkerWorks.slice(0, 6).map(work => ({
     id: work.id,
     src: work.image,
     alt: work.title

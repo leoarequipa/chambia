@@ -6,11 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build:android": "npm run build && npx cap sync android",
+    "run:android": "npx cap run android",
+    "open:android": "npx cap open android",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "test:pwa": "lighthouse --chrome-flags='--headless' --output=html --output-path=./reports"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
