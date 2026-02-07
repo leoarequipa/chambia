@@ -1,8 +1,8 @@
-# ChambIA - Inteligencia Artificial Humana
+# ChambIA - Inteligencia y Sistema de Reputación
 
-## 🧠 Comportamiento de IA (Invisible para el Usuario)
+## 🧠 Sistema de Inteligencia Automático
 
-ChambIA utiliza inteligencia que **mejora el perfil automáticamente** mientras el trabajador registra sus actividades diarias. Para el usuario, la experiencia es simple y transparente: *"Mi perfil mejora mientras trabajo"*.
+ChambIA utiliza un sistema inteligente que **mejora el perfil automáticamente** mientras el trabajador registra sus actividades diarias. La experiencia es transparente: *"Mi perfil mejora mientras trabajo"*.
 
 ## 🎯 Principios Fundamentales
 
@@ -12,12 +12,14 @@ ChambIA utiliza inteligencia que **mejora el perfil automáticamente** mientras 
 - **Detecta consistencia** en el oficio del trabajador
 - **Estima experiencia** acumulada real
 - **Actualiza reputación** basada en hechos verificables
+- **Cachea datos** para carga instantánea (localStorage)
 
 ### ❌ Lo que NUNCA hace:
 - **Autoevaluaciones**: El trabajador nunca se califica a sí mismo
 - **Pedir calificaciones**: No se pide opiniones de terceros
 - **Mostrar tecnicismos**: Nunca dice "algoritmo", "modelo" o "machine learning"
 - **Procesos visibles**: El usuario solo ve resultados positivos
+- **Ralentizar la app**: Todo el análisis es instantáneo
 
 ## 🔄 Proceso Interno (Invisible)
 
@@ -25,69 +27,87 @@ ChambIA utiliza inteligencia que **mejora el perfil automáticamente** mientras 
 ```
 Usuario: "Arreglé el caño de la cocina" + Foto
 ↓
-IA: Analiza en 1.5 segundos (invisible)
+IA: Analiza en < 1 segundo (invisible)
 ↓
 Resultado visible: 
 - Detecta: "Gasfitería - Reparación de caño"
-- Calcula: +0.03 reputación
+- Calcula: +0.1 reputación
 - Verifica: "Consistente con trabajos anteriores"
 ```
 
-### 2. Análisis de Texto
+### 2. Análisis de Texto Optimizado
 ```typescript
-// Palabras reales por oficio
-Gasfitería: ['caño', 'tubería', 'grifo', 'fuga', 'instalación']
-Construcción: ['muro', 'pared', 'ladrillo', 'cemento']
-Electricidad: ['cable', 'luz', 'interruptor', 'toma']
-Pintura: ['pintar', 'color', 'pared', 'techo']
+// Sistema de keywords por oficio (O(1) lookup)
+const WORK_TYPES = [
+  { keywords: ['caño', 'tubería', 'grifo', 'fuga'], type: 'Gasfitería' },
+  { keywords: ['muro', 'pared', 'ladrillo', 'cemento'], type: 'Construcción' },
+  { keywords: ['luz', 'cable', 'toma', 'enchufe'], type: 'Electricidad' },
+  { keywords: ['pintar', 'color', 'brocha'], type: 'Pintura' },
+];
+
+// Detección instantánea
+const detectarTipoTrabajo = (desc: string): string => {
+  const texto = desc.toLowerCase();
+  for (const workType of WORK_TYPES) {
+    if (workType.keywords.some(k => texto.includes(k))) {
+      return workType.type;
+    }
+  }
+  return 'Trabajo General';
+};
 ```
 
-### 3. Análisis de Imagen
+### 3. Cálculo de Reputación
 ```typescript
-// Se detecta: ¿Es un trabajo real?
-- ¿Hay herramientas profesionales?
-- ¿Se ve el trabajo terminado?
-- ¿Es una foto clara?
-```
+reputación += 0.1; // Cada trabajo añade +0.1 estrellas
 
-### 4. Cálculo de Reputación
-```typescript
-reputación += consistencia × 0.05    // Si es consistente en su oficio
-reputación += experiencia × 0.03     // Si tiene experiencia acumulada
-reputación += calidadFoto × 0.02     // Si la foto es buena
+// Bonus por hitos
+if (totalTrabajos === 5) {
+  insignias.push('Principiante Activo');
+} else if (totalTrabajos === 10) {
+  insignias.push('Trabajador Dedicado');
+}
 ```
 
 ## 📊 Métricas Basadas en Hechos
 
-### 🎯 Consistencia (0-100%)
-- **¿Coincide tipo seleccionado con detectado?** (+30%)
-- **¿Es consistente con trabajos anteriores?** (+40%)
-- **¿Se especializa en un oficio?** (+30%)
+### ⭐ Sistema de Reputación
+- **Base**: Cada trabajo añade +0.1 estrellas
+- **Máximo**: 5.0 estrellas
+- **Visualización**: Estrellas llenas con un decimal (4.8)
 
-### ⭐ Experiencia (0-100%)
-- **Recencia**: Trabajos recientes valen más
-- **Frecuencia**: Más trabajos = más experiencia
-- **Especialización**: Trabajos similares suman más
+### 📈 Insignias Automáticas
+- **"Principiante Activo"**: 5 trabajos registrados
+- **"Trabajador Dedicado"**: 10 trabajos registrados
+- **Sistema extensible**: Fácil añadir más hitos
 
-### 🏆 Insignias Automáticas (Basadas en Logros)
-- **"Principiante Activo"**: 20+ experiencia
-- **"Trabajador Dedicado"**: 40+ experiencia, 60% consistencia
-- **"Profesional Confiable"**: 60+ experiencia, 70% consistencia
-- **"Experto Consistente"**: 80+ experiencia, 85% consistencia
+### 💾 Cache Local
+```typescript
+// Almacenamiento en localStorage para carga instantánea
+localStorage.setItem('chambia_perfil', JSON.stringify(perfil));
+localStorage.setItem('chambia_trabajos', JSON.stringify(trabajos));
+
+// Carga inicial desde cache (< 50ms)
+const cachedPerfil = localStorage.getItem('chambia_perfil');
+if (cachedPerfil) {
+  setPerfil(JSON.parse(cachedPerfil));
+  setIsLoading(false); // Muestra datos inmediatamente
+}
+```
 
 ## 💬 Mensajes al Usuario (Sin Tecnicismos)
 
-### 📈 Cuando sube reputación rápido:
-> "¡Excelente trabajo! Tu reputación está subiendo rápidamente 📈"
+### 📈 Cuando sube reputación:
+> "¡Excelente trabajo! Tu reputación está subiendo ⭐"
 
 ### ✨ Cuando mejora consistentemente:
-> "¡Bien hecho! Tu perfil se ve más confiable cada día ✨"
+> "¡Bien hecho! Tu perfil se ve más confiable cada día"
 
 ### 🌱 Cuando empieza:
 > "Todos empezamos así, sigue registrando tus trabajos 💪"
 
-### 🎯 Cuando es muy consistente:
-> "🎯 Muy consistente en tu oficio, los empleadores lo notarán"
+### 🏆 Cuando desbloquea insignia:
+> "¡Nueva insignia desbloqueada! Trabajador Dedicado 🏆"
 
 ### ❌ NUNCA muestra:
 - "Procesando con algoritmo..."
@@ -95,41 +115,46 @@ reputación += calidadFoto × 0.02     // Si la foto es buena
 - "Modelo calculó consistencia: 78%"
 - "AI confidence: 92%"
 
-## 🔍 Análisis Detallado (Oculto)
-
-### Análisis de Imagen
-```typescript
-// Lo que evalúa la IA (invisible para usuario)
-1. Calidad general: ¿Se ve profesional?
-2. Objetos detectados: ¿Hay herramientas de trabajo?
-3. Contexto: ¿Es un trabajo real?
-4. Completitud: ¿Se ve el trabajo terminado?
-```
-
-### Para el usuario (visible):
-```typescript
-// Si la foto es buena:
-"📸 Excelente calidad de foto, ayuda mucho"
-
-// Si detecta elementos profesionales:
-"✅ Vemos herramientas profesionales"
-```
-
-## 🚀 Experiencia del Usuario
+## 🚀 Experiencia de Usuario Optimizada
 
 ### Flujo Percibido:
 ```
-1. Usuario registra trabajo (60 segundos)
-2. App dice: "Mejorando tu perfil..." 
-3. App muestra: "¡Tu reputación subió! +0.2 ⭐"
-4. Perfil actualizado: Estrella adicional visible
+1. Usuario registra trabajo (30 segundos)
+2. App dice: "Guardando..." (instantáneo)
+3. App muestra: "¡Tu reputación subió! +0.1 ⭐" (0.5s)
+4. Perfil actualizado: Estrella visible inmediatamente
 5. Insignia nueva (si aplica): "🏆 ¡Nueva insignia!"
 ```
 
-### Resultado Final:
-- 👤 **El usuario siente**: "Mi perfil mejora mientras trabajo"
-- 🔒 **Sin entender**: Los complejos procesos de IA
-- 📈 **Solo ve**: Resultados positivos y motivadores
+### Optimizaciones de Rendimiento:
+- **Análisis**: < 1 segundo (procesamiento local)
+- **Carga**: Datos cacheados (sin pantallas de loading)
+- **Transiciones**: Animaciones suaves 60fps
+- **Feedback**: Inmediato, sin esperas
+
+## 📊 Ejemplo Real Completo
+
+### Trabajo Registrado:
+```
+Texto: "Arreglé el caño de la cocina que tenía fuga"
+Foto: Imagen capturada con cámara nativa
+```
+
+### Análisis Interno (Invisible):
+```typescript
+detectarTipoTrabajo("caño cocina fuga") → "Gasfitería"
+perfil.reputacion += 0.1 → 3.5 + 0.1 = 3.6
+perfil.totalTrabajos += 1 → 3 + 1 = 4
+
+// Actualizar cache
+localStorage.setItem('chambia_perfil', JSON.stringify(perfil));
+```
+
+### Lo que ve el usuario:
+```
+✨ ¡Bien hecho! Tu perfil se ve más confiable cada día
+⭐ Tu reputación subió +0.1
+```
 
 ## 🎯 Impacto Real
 
@@ -138,37 +163,50 @@ reputación += calidadFoto × 0.02     // Si la foto es buena
 - 📈 **Motivación clara**: "Mi perfil mejora"
 - 🎯 **Dirección clara**: "Sé consistente para crecer"
 - 🏆 **Recompensas**: Insignias por logros reales
+- ⚡ **Velocidad**: Todo es instantáneo
 
 ### Para el Empleador:
 - ✅ **Confiable**: Basado en hechos reales, no opiniones
-- 📊 **Transparente**: Evidencia visual de cada trabajo
+- 📸 **Evidencia visual**: Fotos reales de cada trabajo
 - 🎯 **Específico**: Experto verificable en su oficio
 - 🌟 **Verificado**: Sin autoevaluaciones falsas
 
-## 📊 Ejemplo Real Completo
+## 🔧 Implementación Técnica
 
-### Trabajo Registrado:
-```
-Texto: "Arreglé el caño de la cocina que tenía fuga"
-Foto: Imagen de caño reparado en cocina
-```
+### Archivos Clave:
+- `src/lib/intelligence.ts` - Lógica de reputación
+- `src/lib/data.ts` - Datos mock y estructuras
+- `src/app/register-work/page.tsx` - Formulario de registro
+- `src/app/page.tsx` - Dashboard con métricas
 
-### Análisis Interno (Invisible):
+### Funciones Principales:
 ```typescript
-detectarTipoReal("caño cocina fuga") → "Gasfitería"
-calcularConsistencia("Gasfitería", "Gasfitería", historial) → 85%
-calcularExperiencia(trabajosAnteriores) → 45%
-calcularMejoraReputacion(85, 45) → +0.07
-checkInsignias(45, 85) → "Trabajador Dedicado"
+// Obtener perfil actual
+obtenerPerfilActual() → { nombre, reputacion, totalTrabajos, insignias }
+
+// Simular registro (aumenta reputación)
+simularRegistroTrabajo() → { mejoraReputacion, nuevaInsignia, mensaje }
+
+// Detectar tipo desde descripción
+detectarTipoTrabajo(descripcion: string) → string
 ```
 
-### Lo que ve el usuario:
-```
-✨ ¡Bien hecho! Tu perfil se ve más confiable cada día
-⭐ Tu reputación subió +0.07
-🏆 ¡Nueva insignia! Trabajador Dedicado
-```
+## 🎨 Diseño de la Experiencia
+
+### Sin Fricción:
+- No hay pantallas de "procesando"
+- No hay barras de progreso técnicas
+- No hay términos complejos
+- Solo resultados positivos inmediatos
+
+### Feedback Positivo Constante:
+- Cada trabajo aporta algo positivo
+- Mensajes motivadores en cada acción
+- Progreso visible en tiempo real
+- Celebración de hitos (insignias)
 
 ---
 
-**Resultado Final**: La IA funciona como un asistente silencioso que mejora el perfil del trabajador automáticamente, mostrando solo resultados beneficiosos y manteniendo la experiencia simple y humana. El usuario percibe progreso sin entender la complejidad detrás.
+**Resultado**: La IA funciona como un asistente invisible que mejora el perfil automáticamente, mostrando solo resultados beneficiosos y manteniendo la experiencia simple, rápida y humana.
+
+**Velocidad**: Todo el proceso de análisis toma menos de 1 segundo, imperceptible para el usuario.
