@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button, IconButton } from '@/components/ui/Button'
 import { AnalysisFeedback } from '@/components/ui/AnalysisFeedback'
 import { CameraCapture } from '@/components/ui/Camera'
-import { BottomNav } from '@/components/layout/BottomNav'
+import { BottomBar } from '@/components/layout/BottomBar'
 import { agregarNuevoTrabajo, inicializarDatos, detectarTipoTrabajo } from '@/lib/intelligence'
 
 // Material Icons memoizados
@@ -115,23 +115,6 @@ export default function RegisterWorkPage() {
 
   return (
     <div className="container-mobile">
-      {/* Top App Bar */}
-      <header className="md-top-app-bar-small px-4 animate-fade-in">
-        <div className="flex items-center gap-4 w-full">
-          <Link href="/">
-            <IconButton 
-              icon={<ArrowBackIcon />}
-              ariaLabel="Volver"
-              variant="standard"
-            />
-          </Link>
-          <h1 className="md-title-large text-[var(--md-sys-color-on-surface)]">
-            Nuevo Trabajo
-          </h1>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="main-content">
         {/* Error */}
         {error && (
@@ -240,8 +223,7 @@ export default function RegisterWorkPage() {
         )}
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeTab="register-work" />
+      <BottomBar />
     </div>
   )
 }

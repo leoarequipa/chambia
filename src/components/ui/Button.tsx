@@ -43,45 +43,46 @@ export function Button({
     button.style.setProperty('--y', `${y}px`)
   }
 
-  // Material Design 3 Button Styles
+  // Size classes
   const sizeClasses = {
-    small: 'h-8 px-3 text-sm',
-    medium: 'h-10 px-4 text-sm',
-    large: 'h-14 px-6 text-base',
+    small: 'h-9 px-4 text-sm',
+    medium: 'h-11 px-5 text-base',
+    large: 'h-14 px-8 text-lg',
   }
 
+  // Variant styles
   const variants = {
     filled: `
-      bg-[var(--md-sys-color-primary)] 
-      text-[var(--md-sys-color-on-primary)]
-      shadow-none
-      hover:shadow-md
-      active:shadow-none
+      bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)]
+      text-white
+      shadow-lg shadow-[var(--primary-500)]/25
+      hover:shadow-xl hover:shadow-[var(--primary-500)]/30
+      active:shadow-md
     `,
     tonal: `
-      bg-[var(--md-sys-color-secondary-container)] 
-      text-[var(--md-sys-color-on-secondary-container)]
-      shadow-none
-      hover:shadow-sm
+      bg-[var(--neutral-100)]
+      text-[var(--text-primary)]
+      hover:bg-[var(--neutral-200)]
     `,
     outlined: `
       bg-transparent
-      text-[var(--md-sys-color-primary)]
-      border border-[var(--md-sys-color-outline)]
-      hover:bg-[var(--md-sys-color-primary)]/5
+      text-[var(--primary-500)]
+      border-2 border-[var(--neutral-200)]
+      hover:border-[var(--primary-300)]
+      hover:bg-[var(--primary-50)]
     `,
     text: `
       bg-transparent
-      text-[var(--md-sys-color-primary)]
-      hover:bg-[var(--md-sys-color-primary)]/5
+      text-[var(--primary-500)]
+      hover:bg-[var(--primary-50)]
       px-3
     `,
     elevated: `
-      bg-[var(--md-sys-color-surface)]
-      text-[var(--md-sys-color-primary)]
+      bg-white
+      text-[var(--text-primary)]
       shadow-md
       hover:shadow-lg
-      hover:bg-[var(--md-sys-color-primary)]/5
+      hover:-translate-y-0.5
     `,
   }
 
@@ -90,20 +91,19 @@ export function Button({
     items-center
     justify-center
     gap-2
-    font-medium
+    font-semibold
     rounded-full
     transition-all
     duration-200
     select-none
     ripple
-    md-state-layer
-    disabled:opacity-40
+    pressable
+    disabled:opacity-50
     disabled:cursor-not-allowed
     disabled:hover:shadow-none
-    active:scale-[0.98]
     focus:outline-none
     focus-visible:ring-2
-    focus-visible:ring-[var(--md-sys-color-primary)]
+    focus-visible:ring-[var(--primary-500)]
     focus-visible:ring-offset-2
     min-w-[48px]
   `
@@ -137,7 +137,7 @@ export function Button({
   )
 }
 
-// Material 3 FAB (Floating Action Button)
+// Modern FAB (Floating Action Button)
 interface FABProps {
   icon: ReactNode
   onClick?: () => void
@@ -156,22 +156,22 @@ export function FAB({
   className = '',
 }: FABProps) {
   const variants = {
-    primary: 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]',
-    secondary: 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]',
-    tertiary: 'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]',
-    surface: 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)]',
+    primary: 'bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white shadow-lg shadow-[var(--primary-500)]/30',
+    secondary: 'bg-gradient-to-br from-[var(--accent-secondary)] to-[#4F46E5] text-white shadow-lg shadow-indigo-500/30',
+    tertiary: 'bg-gradient-to-br from-[var(--accent-tertiary)] to-[#7C3AED] text-white shadow-lg shadow-purple-500/30',
+    surface: 'bg-white text-[var(--text-primary)] shadow-lg',
   }
 
   const sizes = {
-    small: 'w-10 h-10',
+    small: 'w-12 h-12',
     standard: 'w-14 h-14',
-    large: 'w-24 h-24',
+    large: 'w-16 h-16',
   }
 
   const iconSizes = {
     small: 'w-5 h-5',
     standard: 'w-6 h-6',
-    large: 'w-9 h-9',
+    large: 'w-7 h-7',
   }
 
   return (
@@ -181,21 +181,20 @@ export function FAB({
       className={`
         ${sizes[size]}
         ${variants[variant]}
-        rounded-[16px]
-        shadow-lg
+        rounded-2xl
         hover:shadow-xl
-        active:shadow-md
+        hover:-translate-y-1
+        active:translate-y-0
         active:scale-95
         transition-all
         duration-200
         flex
         items-center
         justify-center
-        md-state-layer
-        ripple
+        pressable
         focus:outline-none
         focus-visible:ring-2
-        focus-visible:ring-[var(--md-sys-color-primary)]
+        focus-visible:ring-[var(--primary-500)]
         focus-visible:ring-offset-2
         ${className}
       `}
@@ -205,7 +204,7 @@ export function FAB({
   )
 }
 
-// Material 3 Icon Button
+// Modern Icon Button
 interface IconButtonProps {
   icon: ReactNode
   onClick?: () => void
@@ -225,17 +224,17 @@ export function IconButton({
 }: IconButtonProps) {
   const variants = {
     filled: selected
-      ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-      : 'bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]',
+      ? 'bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white shadow-md'
+      : 'bg-[var(--neutral-100)] text-[var(--text-secondary)]',
     tonal: selected
-      ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]'
-      : 'bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]',
+      ? 'bg-[var(--primary-100)] text-[var(--primary-600)]'
+      : 'bg-[var(--neutral-100)] text-[var(--text-secondary)]',
     outlined: selected
-      ? 'bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] border border-[var(--md-sys-color-outline)]'
-      : 'bg-transparent text-[var(--md-sys-color-on-surface-variant)] border border-[var(--md-sys-color-outline)]',
+      ? 'bg-[var(--primary-50)] text-[var(--primary-600)] border-2 border-[var(--primary-500)]'
+      : 'bg-transparent text-[var(--text-secondary)] border-2 border-[var(--neutral-200)]',
     standard: selected
-      ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]'
-      : 'bg-transparent text-[var(--md-sys-color-on-surface-variant)]',
+      ? 'bg-[var(--primary-100)] text-[var(--primary-600)]'
+      : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--neutral-100)]',
   }
 
   return (
@@ -244,21 +243,18 @@ export function IconButton({
       aria-label={ariaLabel}
       aria-pressed={selected}
       className={`
-        w-10
-        h-10
-        rounded-full
+        w-11
+        h-11
+        rounded-xl
         flex
         items-center
         justify-center
         transition-all
         duration-200
-        md-state-layer
-        ripple
-        hover:bg-black/5
-        active:scale-95
+        pressable
         focus:outline-none
         focus-visible:ring-2
-        focus-visible:ring-[var(--md-sys-color-primary)]
+        focus-visible:ring-[var(--primary-500)]
         ${variants[variant]}
         ${className}
       `}

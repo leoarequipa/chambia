@@ -3,7 +3,7 @@
 import { useState, useEffect, memo } from 'react'
 import Link from 'next/link'
 import { Button, IconButton } from '@/components/ui/Button'
-import { BottomNav } from '@/components/layout/BottomNav'
+import { BottomBar } from '@/components/layout/BottomBar'
 import { ListSkeleton } from '@/components/ui/Skeleton'
 import { obtenerTrabajosComoWorks, inicializarDatos } from '@/lib/intelligence'
 
@@ -133,52 +133,16 @@ export default function HistoryPage() {
   if (isLoading) {
     return (
       <div className="container-mobile">
-        <header className="md-top-app-bar-small px-4">
-          <div className="flex items-center gap-4 w-full">
-            <Link href="/">
-              <IconButton 
-                icon={<ArrowBackIcon />}
-                ariaLabel="Volver"
-                variant="standard"
-              />
-            </Link>
-            <div className="flex-1">
-              <h1 className="md-title-large text-[var(--md-sys-color-on-surface)]">
-                Historial
-              </h1>
-            </div>
-          </div>
-        </header>
         <main className="main-content">
           <ListSkeleton count={4} />
         </main>
-        <BottomNav activeTab="history" />
+        <BottomBar />
       </div>
     )
   }
 
   return (
     <div className="container-mobile">
-      {/* Top App Bar */}
-      <header className="md-top-app-bar-small px-4 animate-fade-in">
-        <div className="flex items-center gap-4 w-full">
-          <Link href="/">
-            <IconButton 
-              icon={<ArrowBackIcon />}
-              ariaLabel="Volver"
-              variant="standard"
-            />
-          </Link>
-          <div className="flex-1">
-            <h1 className="md-title-large text-[var(--md-sys-color-on-surface)]">
-              Historial
-            </h1>
-            <p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
-              {trabajos.length} {trabajos.length === 1 ? 'trabajo' : 'trabajos'}
-            </p>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="main-content">
@@ -231,8 +195,7 @@ export default function HistoryPage() {
         </Link>
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeTab="history" />
+      <BottomBar />
     </div>
   )
 }

@@ -1,109 +1,31 @@
 'use client'
 
-import { useState, useEffect, memo, Suspense } from 'react'
+import { useState, useEffect, memo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button, FAB } from '@/components/ui/Button'
-import { BottomNav } from '@/components/layout/BottomNav'
+import { FAB } from '@/components/ui/Button'
+import { BottomBar } from '@/components/layout/BottomBar'
 import { CardSkeleton, ImageGridSkeleton } from '@/components/ui/Skeleton'
 import { obtenerPerfilActual, obtenerTrabajosComoWorks, inicializarDatos } from '@/lib/intelligence'
 import { getWorker } from '@/lib/data'
 
-// Lazy load del componente de cámara
-const CameraIcon = memo(() => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-    <circle cx="12" cy="13" r="4"/>
-  </svg>
-))
-
-const StarIcon = memo(() => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-  </svg>
-))
-
-const WorkIcon = memo(() => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-  </svg>
-))
-
-const PersonIcon = memo(() => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
-  </svg>
-))
-
-const ListIcon = memo(() => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="8" y1="6" x2="21" y2="6"/>
-    <line x1="8" y1="12" x2="21" y2="12"/>
-    <line x1="8" y1="18" x2="21" y2="18"/>
-    <line x1="3" y1="6" x2="3.01" y2="6"/>
-    <line x1="3" y1="12" x2="3.01" y2="12"/>
-    <line x1="3" y1="18" x2="3.01" y2="18"/>
-  </svg>
-))
-
-const TrendingIcon = memo(() => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-    <polyline points="17 6 23 6 23 12"/>
-  </svg>
-))
-
-// Componente memoizado para tarjeta de trabajo
 const WorkCard = memo(function WorkCard({ trabajo, index }: { trabajo: any; index: number }) {
   return (
     <div 
-      className={`md-card aspect-square overflow-hidden rounded-2xl relative group animate-fade-in-up stagger-${Math.min(index + 1, 6)}`}
+      className="card aspect-square overflow-hidden"
+      style={{ animationDelay: `${150 + index * 50}ms` }}
     >
       <img
         src={trabajo.image}
         alt={trabajo.title}
-        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        className="w-full h-full object-cover"
         loading="lazy"
         decoding="async"
         onError={(e) => {
           (e.target as HTMLImageElement).src = '/images/work-placeholder.jpg'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
     </div>
-  )
-})
-
-// Componente memoizado para acceso rápido
-const QuickAccessCard = memo(function QuickAccessCard({ 
-  href, 
-  icon, 
-  title, 
-  subtitle,
-  color
-}: { 
-  href: string
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  color: string
-}) {
-  return (
-    <Link href={href} className="block animate-fade-in-up stagger-2">
-      <div className={`md-card-filled p-4 rounded-2xl md-state-layer cursor-pointer active:scale-95 transition-all duration-200 hover:shadow-md ${color}`}>
-        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-3">
-          {icon}
-        </div>
-        <p className="md-label-large text-[var(--md-sys-color-on-surface)]">
-          {title}
-        </p>
-        <p className="md-body-small text-[var(--md-sys-color-on-surface-variant)] mt-1">
-          {subtitle}
-        </p>
-      </div>
-    </Link>
   )
 })
 
@@ -114,22 +36,18 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    // Verificar autenticación primero
     const cachedPerfil = localStorage.getItem('chambia_perfil')
     if (cachedPerfil) {
       const perfilData = JSON.parse(cachedPerfil)
-      // Si el nombre es el default "Juan Pérez", no está autenticado
       if (perfilData.nombre === 'Juan Pérez') {
         router.push('/login')
         return
       }
     } else {
-      // No hay perfil, redirigir a login
       router.push('/login')
       return
     }
     
-    // Carga rápida desde cache/localStorage si existe
     const cachedTrabajos = localStorage.getItem('chambia_trabajos')
     
     if (cachedPerfil && cachedTrabajos) {
@@ -138,7 +56,6 @@ export default function HomePage() {
       setIsLoading(false)
     }
     
-    // Carga fresh en background
     inicializarDatos()
     
     const perfilActual = obtenerPerfilActual()
@@ -148,7 +65,6 @@ export default function HomePage() {
     setTrabajos(trabajosActuales)
     setIsLoading(false)
     
-    // Cachear para próximas cargas
     localStorage.setItem('chambia_perfil', JSON.stringify(perfilActual))
     localStorage.setItem('chambia_trabajos', JSON.stringify(trabajosActuales))
   }, [router])
@@ -159,122 +75,182 @@ export default function HomePage() {
   if (isLoading) {
     return (
       <div className="container-mobile">
-        <header className="px-4 pt-4 pb-2">
-          <CardSkeleton />
-        </header>
         <main className="main-content">
+          <div style={{ marginBottom: '16px' }}>
+            <CardSkeleton />
+          </div>
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="h-24 bg-[var(--md-sys-color-surface-variant)] rounded-2xl animate-pulse" />
-            <div className="h-24 bg-[var(--md-sys-color-surface-variant)] rounded-2xl animate-pulse" />
+            <div className="h-28 bg-gray-100 rounded-2xl animate-pulse" />
+            <div className="h-28 bg-gray-100 rounded-2xl animate-pulse" />
           </div>
           <ImageGridSkeleton count={4} />
         </main>
-        <BottomNav activeTab="home" />
+        <BottomBar />
       </div>
     )
   }
 
   if (!perfil) {
     return (
-      <div className="container-mobile">
-        <div className="flex-1 flex items-center justify-center animate-fade-in">
-          <div className="text-center">
-            <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)]">
-              Error al cargar datos
-            </p>
-            <Button 
-              variant="filled" 
-              onClick={() => window.location.reload()}
-              className="mt-4"
-            >
-              Reintentar
-            </Button>
-          </div>
+      <div className="container-mobile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#666666' }}>Error al cargar datos</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '16px',
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #FF6B35 0%, #E85A2B 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '16px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Reintentar
+          </button>
         </div>
-        <BottomNav activeTab="home" />
+        <BottomBar />
       </div>
     )
   }
 
   return (
     <div className="container-mobile">
-      {/* Header */}
-      <header className="px-4 pt-4 pb-2 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="md-body-small text-[var(--md-sys-color-on-surface-variant)]">
-              Bienvenido
-            </p>
-            <h1 className="md-headline-small text-[var(--md-sys-color-on-surface)]">
-              ChambIA
-            </h1>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center animate-scale-in">
-            <span className="text-[var(--md-sys-color-on-primary-container)] font-medium">
-              {perfil.nombre.charAt(0)}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
       <main className="main-content">
+        {/* Welcome Text */}
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ fontSize: '14px', color: '#808080' }}>Bienvenido de vuelta,</p>
+          <p style={{ fontSize: '20px', fontWeight: 600, color: '#1A1A1A' }}>{perfil.nombre}</p>
+        </div>
+
         {/* Profile Card */}
-        <div className="md-card p-4 mb-4 animate-fade-in-up stagger-1">
-          <div className="flex items-center gap-4">
-            <img 
-              src={perfil.avatar || worker.avatar}
-              alt={perfil.nombre}
-              className="w-14 h-14 rounded-full object-cover border-2 border-[var(--md-sys-color-outline-variant)]"
-              loading="eager"
-            />
-            <div className="flex-1">
-              <p className="md-title-medium text-[var(--md-sys-color-on-surface)]">
+        <div className="card" style={{ padding: '20px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <img 
+                src={perfil.avatar || worker.avatar}
+                alt={perfil.nombre}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '16px',
+                  objectFit: 'cover'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                bottom: '-4px',
+                right: '-4px',
+                width: '24px',
+                height: '24px',
+                background: '#22C55E',
+                borderRadius: '50%',
+                border: '2px solid white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '18px', fontWeight: 600, color: '#1A1A1A', marginBottom: '8px' }}>
                 {perfil.nombre}
               </p>
-              <div className="flex items-center gap-3 mt-1">
-                <div className="flex items-center gap-1 text-[var(--md-sys-color-primary)]">
-                  <StarIcon />
-                  <span className="md-label-large">{perfil.reputacion.toFixed(1)}</span>
-                </div>
-                <span className="text-[var(--md-sys-color-outline)]">•</span>
-                <div className="flex items-center gap-1 text-[var(--md-sys-color-on-surface-variant)]">
-                  <WorkIcon />
-                  <span className="md-label-large">{perfil.totalTrabajos}</span>
-                </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 12px',
+                  background: '#FFF5F0',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  color: '#FF6B35',
+                  fontWeight: 600
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF6B35">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  {perfil.reputacion.toFixed(1)}
+                </span>
+                <span style={{ fontSize: '14px', color: '#666666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                  </svg>
+                  {perfil.totalTrabajos} trabajos
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <QuickAccessCard 
-            href="/profile"
-            icon={<PersonIcon />}
-            title="Mi Perfil"
-            subtitle="Ver detalles"
-            color="bg-[var(--md-sys-color-secondary-container)]"
-          />
-          <QuickAccessCard 
-            href="/history"
-            icon={<ListIcon />}
-            title="Historial"
-            subtitle={`${trabajos.length} trabajos`}
-            color="bg-[var(--md-sys-color-tertiary-container)]"
-          />
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3" style={{ marginBottom: '20px' }}>
+          <Link href="/profile" style={{ textDecoration: 'none' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+              borderRadius: '16px',
+              padding: '16px',
+              color: 'white'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '12px'
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <p style={{ fontWeight: 600, marginBottom: '4px' }}>Mi Perfil</p>
+              <p style={{ fontSize: '12px', opacity: 0.8 }}>Ver detalles</p>
+            </div>
+          </Link>
+          <Link href="/history" style={{ textDecoration: 'none' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+              borderRadius: '16px',
+              padding: '16px',
+              color: 'white'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '12px'
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <p style={{ fontWeight: 600, marginBottom: '4px' }}>Historial</p>
+              <p style={{ fontSize: '12px', opacity: 0.8 }}>{trabajos.length} trabajos</p>
+            </div>
+          </Link>
         </div>
 
         {/* Recent Works */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3 animate-fade-in-up stagger-3">
-            <h3 className="md-title-medium text-[var(--md-sys-color-on-surface)]">
-              Trabajos recientes
-            </h3>
-            <Link href="/history">
-              <span className="md-label-large text-[var(--md-sys-color-primary)]">
-                Ver todo
-              </span>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1A1A1A' }}>Trabajos recientes</h3>
+            <Link href="/history" style={{ color: '#FF6B35', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
+              Ver todo →
             </Link>
           </div>
           
@@ -285,51 +261,81 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="md-card-filled rounded-2xl p-8 text-center animate-fade-in-up stagger-3">
-              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center">
-                <CameraIcon />
+            <div className="card-filled" style={{ padding: '32px', textAlign: 'center' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 16px',
+                background: 'linear-gradient(135deg, #FFE6DB 0%, #FFCCB8 100%)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
               </div>
-              <p className="md-body-large text-[var(--md-sys-color-on-surface-variant)]">
-                No tienes trabajos aún
-              </p>
+              <p style={{ color: '#666666' }}>No tienes trabajos aún</p>
+              <p style={{ fontSize: '12px', color: '#808080', marginTop: '4px' }}>¡Registra tu primer trabajo!</p>
             </div>
           )}
         </div>
 
         {/* Motivational Banner */}
-        <div className="md-card-filled rounded-2xl p-4 mb-4 animate-fade-in-up stagger-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[var(--md-sys-color-tertiary-container)] flex items-center justify-center">
-              <TrendingIcon />
+        <div style={{
+          background: 'linear-gradient(135deg, #FF6B35 0%, #E85A2B 100%)',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '20px',
+          color: 'white'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
             </div>
             <div>
-              <p className="md-title-small text-[var(--md-sys-color-on-surface)]">
+              <p style={{ fontWeight: 600, marginBottom: '4px' }}>
                 {perfil.totalTrabajos > 0 ? '¡Vas muy bien!' : '¡Comienza hoy!'}
               </p>
-              <p className="md-body-medium text-[var(--md-sys-color-on-surface-variant)]">
-                {perfil.totalTrabajos > 0 
-                  ? 'Tu perfil se hace más confiable'
-                  : 'Registra tu primer trabajo'}
+              <p style={{ fontSize: '14px', opacity: 0.9 }}>
+                {perfil.totalTrabajos > 0 ? 'Tu perfil se hace más confiable' : 'Registra tu primer trabajo'}
               </p>
             </div>
           </div>
         </div>
 
-        {/* FAB for adding work */}
-        <div className="flex justify-center mb-6 animate-fade-in-up stagger-6">
+        {/* FAB */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
           <Link href="/register-work">
             <FAB
-              icon={<CameraIcon />}
+              icon={
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              }
               ariaLabel="Registrar nuevo trabajo"
               variant="primary"
-              size="standard"
+              size="large"
             />
           </Link>
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeTab="home" />
+      <BottomBar />
     </div>
   )
 }
