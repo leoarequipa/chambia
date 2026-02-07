@@ -2,6 +2,7 @@
 
 import { useState, useEffect, memo, Suspense } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button, FAB } from '@/components/ui/Button'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { CardSkeleton, ImageGridSkeleton } from '@/components/ui/Skeleton'
@@ -107,13 +108,28 @@ const QuickAccessCard = memo(function QuickAccessCard({
 })
 
 export default function HomePage() {
+  const router = useRouter()
   const [perfil, setPerfil] = useState<any>(null)
   const [trabajos, setTrabajos] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    // Carga rápida desde cache/localStorage si existe
+    // Verificar autenticación primero
     const cachedPerfil = localStorage.getItem('chambia_perfil')
+    if (cachedPerfil) {
+      const perfilData = JSON.parse(cachedPerfil)
+      // Si el nombre es el default "Juan Pérez", no está autenticado
+      if (perfilData.nombre === 'Juan Pérez') {
+        router.push('/login')
+        return
+      }
+    } else {
+      // No hay perfil, redirigir a login
+      router.push('/login')
+      return
+    }
+    
+    // Carga rápida desde cache/localStorage si existe
     const cachedTrabajos = localStorage.getItem('chambia_trabajos')
     
     if (cachedPerfil && cachedTrabajos) {
@@ -135,7 +151,7 @@ export default function HomePage() {
     // Cachear para próximas cargas
     localStorage.setItem('chambia_perfil', JSON.stringify(perfilActual))
     localStorage.setItem('chambia_trabajos', JSON.stringify(trabajosActuales))
-  }, [])
+  }, [router])
 
   const worker = getWorker()
   const trabajosRecientes = trabajos.slice(0, 4)

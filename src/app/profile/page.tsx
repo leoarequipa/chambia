@@ -122,7 +122,6 @@ export default function ProfilePage() {
   const handleLogout = () => {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
       logoutUser()
-      window.location.href = '/onboarding'
     }
   }
 

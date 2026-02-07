@@ -7,7 +7,7 @@ import { Button, IconButton } from '@/components/ui/Button'
 import { AnalysisFeedback } from '@/components/ui/AnalysisFeedback'
 import { CameraCapture } from '@/components/ui/Camera'
 import { BottomNav } from '@/components/layout/BottomNav'
-import { analizarNuevoTrabajo, inicializarDatos } from '@/lib/intelligence'
+import { agregarNuevoTrabajo, inicializarDatos, detectarTipoTrabajo } from '@/lib/intelligence'
 
 // Material Icons memoizados
 const ArrowBackIcon = memo(() => (
@@ -36,15 +36,6 @@ const EditIcon = memo(() => (
   </svg>
 ))
 
-// Tipos de trabajo para autocompletado
-const WORK_TYPES = [
-  { keywords: ['caño', 'tubería', 'grifo', 'fuga', 'agua', 'desagüe'], type: 'Gasfitería' },
-  { keywords: ['muro', 'pared', 'ladrillo', 'cemento', 'construcción', 'obra'], type: 'Construcción' },
-  { keywords: ['luz', 'cable', 'toma', 'enchufe', 'corriente', 'eléctrico'], type: 'Electricidad' },
-  { keywords: ['pintar', 'color', 'brocha', 'pintura', 'pared'], type: 'Pintura' },
-  { keywords: ['puerta', 'ventana', 'madera', 'cerrajería'], type: 'Carpintería' },
-]
-
 export default function RegisterWorkPage() {
   const router = useRouter()
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
@@ -68,18 +59,6 @@ export default function RegisterWorkPage() {
     setShowCamera(false)
   }, [])
 
-  const detectarTipoTrabajo = useCallback((desc: string): string => {
-    const texto = desc.toLowerCase()
-    
-    for (const workType of WORK_TYPES) {
-      if (workType.keywords.some(keyword => texto.includes(keyword))) {
-        return workType.type
-      }
-    }
-    
-    return 'Trabajo General'
-  }, [])
-
   const handleSave = useCallback(async () => {
     if (!capturedImage) {
       setError('Por favor, toma una foto del trabajo')
@@ -101,20 +80,17 @@ export default function RegisterWorkPage() {
     setShowAnalysis(true)
 
     try {
-      const workType = detectarTipoTrabajo(description)
+      // Crear título a partir de la descripción (primeras 3 palabras)
+      const titulo = description.split(' ').slice(0, 3).join(' ')
       
-      const analysis = await analizarNuevoTrabajo({
-        titulo: workType,
-        descripcion: description,
-        tipo: workType,
-        imagen: capturedImage
+      // Guardar trabajo localmente
+      const { analysis } = await agregarNuevoTrabajo({
+        title: titulo,
+        description: description,
+        image: capturedImage
       })
 
       setAnalysisResult(analysis)
-      
-      // Limpiar cache para forzar recarga en otras páginas
-      localStorage.removeItem('chambia_perfil')
-      localStorage.removeItem('chambia_trabajos')
       
       setTimeout(() => {
         router.push('/')
@@ -126,7 +102,7 @@ export default function RegisterWorkPage() {
       setIsAnalyzing(false)
       setShowAnalysis(false)
     }
-  }, [capturedImage, description, detectarTipoTrabajo, router])
+  }, [capturedImage, description, router])
 
   if (showCamera) {
     return (
