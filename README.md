@@ -63,7 +63,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ### 3. Configurar Android SDK
 ```bash
 # Crear archivo local.properties
-echo "sdk.dir=/home/leono/Android/Sdk" > android/local.properties
+echo "sdk.dir=/home/usuario/Android/Sdk" > android/local.properties
 ```
 
 ## 📱 Uso
